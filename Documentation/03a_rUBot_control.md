@@ -127,6 +127,21 @@ ros2 launch my_robot_bringup my_robot_bringup_gz.launch.py world:=square4m_wall_
     ```
     > Change parameter values to verify different movements
 
+#### Move the simulated robot to a new pose
+
+You can reposition the robot in the Gazebo world without restarting the bringup. First stop the active control node with `Ctrl+C`. Then run:
+
+```bash
+ros2 run my_robot_control my_robot_set_pose_exec --ros-args \
+  -p world_name:=square4m_wall_ign \
+  -p robot_name:=rubot_mecanum \
+  -p x:=1.0 \
+  -p y:=-1.0 \
+  -p yaw:=0.0
+```
+
+The parameters `x` and `y` are expressed in metres and `yaw` in radians. Use the Gazebo world name without the `.world` extension. The robot height is left at the default value and does not need to be specified. This command is only for the simulated robot.
+
 **Real robot**
 
 The same simple control program created in virtual environment to move the robot is used for the real robot.
@@ -230,7 +245,8 @@ The algorithm implemented in `my_robot_selfcontrol.py` works as follows:
     - `RIGHT`: move backwards and turn left.
     - `BACK_LEFT` or `BACK_RIGHT`: move forward without turning.
 - When there is no obstacle inside `distance_limit`, the robot continues forward.
-- A timer publishes the latest velocity command and stops the robot after `time_to_stop` seconds.
+- A timer publishes the latest velocity command. Press `Ctrl+C` to publish a zero velocity command and stop the node safely.
+- The default motion parameters are `forward_speed=0.3 m/s` and `rotation_speed=0.5 rad/s`.
 
 Let's verify first this behaviour in virtual environment
 
@@ -239,7 +255,7 @@ Let's verify first this behaviour in virtual environment
 We have to launch the "my_robot_selfcontrol.launch.xml" file in the "my_robot_control" package.
 ```shell
 ros2 launch my_robot_bringup my_robot_bringup_gz.launch.py world:=square4m_wall_ign.world robot_model:=rubot/rubot_mecanum.urdf.xacro x:=1.5 y:=-1.5 yaw:=0.5
-ros2 launch my_robot_control my_robot_selfcontrol.launch.xml time_to_stop:=10.0
+ros2 launch my_robot_control my_robot_selfcontrol.launch.xml
 ```
 ![](./Images/03_Control/selfcontrol.png)
 
@@ -262,7 +278,7 @@ Design the code using the holonomic robot capabilities, and upload:
 
 We have to launch the same `my_robot_selfcontrol.launch.xml` file designed for Virtual environment.
 ```shell
-ros2 launch my_robot_control my_robot_selfcontrol.launch.xml time_to_stop:=10.0
+ros2 launch my_robot_control my_robot_selfcontrol.launch.xml
 ```
 >Verify that the algorithm derives the scan size and angles from the `LaserScan` message and does not assume a fixed number of beams.
 
@@ -280,12 +296,14 @@ The `my_robot_wallfollower.py` node divides the valid LiDAR readings into four a
 - `RIGHT`: -110° to -70°.
 - `BACK_RIGHT`: -160° to -110°.
 
-The controller evaluates these regions in priority order. A front or front-right obstacle makes the robot turn left. When the right wall is visible, the robot follows it. When the right reading is far but the back-right reading is close, the robot turns right around the end of the wall. If no wall is visible, the robot stops.
+The controller evaluates these regions in priority order. A front or front-right obstacle makes the robot turn left. When the right wall is visible, the robot follows it. When the right reading is far but the back-right reading is close, the robot turns right around the end of the wall. If no wall is visible, the differential controller moves forward while searching gently towards the right.
 
 Two wall-follower nodes are available:
 
 - **Differential version — `my_robot_wallfollower.py`:** uses forward velocity (`linear.x`) and rotation (`angular.z`). It turns left or right to maintain the desired distance from the right wall.
-- **Holonomic version — `my_rubot_wallfollower_holonomic.py`:** also uses lateral velocity (`linear.y`). While following the right wall, it corrects the lateral distance and uses a proportional rotation to align the robot with the wall.
+- **Holonomic version — `my_robot_wallfollower_holonomic.py`:** also uses lateral velocity (`linear.y`). While following the right wall, it corrects the lateral distance and uses a proportional rotation to align the robot with the wall.
+
+The common default velocities are `forward_speed=0.3 m/s` and `turn_speed=0.5 rad/s`. The holonomic controller also uses `max_lateral_speed=0.4 m/s` and `max_angular_speed=1.0 rad/s`.
 
 The algorithm is based on LiDAR range tests and specific actions for each region:
 ![](./Images/03_Control/lidar_robot_regions.png)
@@ -295,13 +313,13 @@ The algorithm is based on LiDAR range tests and specific actions for each region
 We have to launch the "my_robot_wallfollower.launch.xml" file in the "my_robot_control" package.
 ```shell
 ros2 launch my_robot_bringup my_robot_bringup_gz.launch.py world:=square4m_wall_ign.world robot_model:=rubot/rubot_mecanum.urdf.xacro x:=1.5 y:=-1.5 yaw:=0.5
-ros2 launch my_robot_control my_robot_wallfollower.launch.xml time_to_stop:=50.0
+ros2 launch my_robot_control my_robot_wallfollower.launch.xml
 ```
 ![](./Images/03_Control/wallfollower1.png)
 To test the holonomic version, keep the same simulation running and execute:
 
 ```shell
-ros2 launch my_robot_control my_rubot_wallfollower_holonomic.launch.py time_to_stop:=50.0
+ros2 launch my_robot_control my_robot_wallfollower_holonomic.launch.py
 ```
 
 >- You can test the behaviour by tuning the defined parameters
@@ -309,22 +327,15 @@ ros2 launch my_robot_control my_rubot_wallfollower_holonomic.launch.py time_to_s
 
 **Activity: rUBot wall-follower**
 
-The objective of this activity is to modify the code to move the robot in a holonomic way, for example:
--  When the minimum distance is in the front side move the robot over the left side
-- When the minimum distance is in the front-right side move the robot over the front-left side
-- When the minimum distance is in the right side move the robot forward and maintain its orientation parallel to the wall
-- When the minimum distance is in the back-right side move the robot over the front-right side
-- When the minimum distance is in the back side move the robot over the right side
+Complete **A4_ROS2_WallFollower**, available at course documentation.
 
-Test the code using the holonomic robot capabilities, and upload:
-- the file `my_rubot_wallfollower_holonomic.py`
-- a video of the current behaviour in your designed world
+Follow the activity document to compare the differential and holonomic controllers, implement the improved holonomic wall follower, test the three nodes and prepare the required delivery.
 
 **REAL robot**
 
 We have to launch the same `my_robot_wallfollower.launch.xml` file designed for the virtual environment.
 ```shell
-ros2 launch my_robot_control my_robot_wallfollower.launch.xml time_to_stop:=50.0
+ros2 launch my_robot_control my_robot_wallfollower.launch.xml
 ```
 >The real and simulated LiDAR may use different scan resolutions. The algorithm must calculate regions from the angles supplied in each `LaserScan` message rather than from fixed array indices.
 

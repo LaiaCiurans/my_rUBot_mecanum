@@ -1,5 +1,6 @@
 import rclpy
 from rclpy.node import Node
+from rclpy.signals import SignalHandlerOptions
 from sensor_msgs.msg import LaserScan
 from geometry_msgs.msg import Twist
 import math
@@ -11,17 +12,15 @@ class RobotSelfControl(Node):
         super().__init__('robot_selfcontrol_node')
 
         # Configurable parameters
-        self.declare_parameter('distance_limit', 0.3)
+        self.declare_parameter('distance_limit', 0.4)
         self.declare_parameter('speed_factor', 1.0)
-        self.declare_parameter('forward_speed', 0.2)
-        self.declare_parameter('rotation_speed', 0.3)
-        self.declare_parameter('time_to_stop', 5.0)
+        self.declare_parameter('forward_speed', 0.3)
+        self.declare_parameter('rotation_speed', 0.5)
 
         self._distanceLimit = self.get_parameter('distance_limit').value
         self._speedFactor = self.get_parameter('speed_factor').value
         self._forwardSpeed = self.get_parameter('forward_speed').value
         self._rotationSpeed = self.get_parameter('rotation_speed').value
-        self._time_to_stop = self.get_parameter('time_to_stop').value
 
         self._msg = Twist()
         self._msg.linear.x = self._forwardSpeed * self._speedFactor
@@ -52,11 +51,6 @@ class RobotSelfControl(Node):
         if now_sec - self._last_speed_time >= 1:
             self.get_logger().info(f"Vx: {self._msg.linear.x:.2f} m/s, w: {self._msg.angular.z:.2f} rad/s | Time: {elapsed_time:.1f}s")
             self._last_speed_time = now_sec
-        if elapsed_time >= self._time_to_stop:
-            self.timer.cancel()
-            self.stop()
-            self.get_logger().info("Robot stopped")
-            return
 
     def laser_callback(self, scan):
         if self._shutting_down:
@@ -127,22 +121,25 @@ class RobotSelfControl(Node):
 
     def stop(self):
         self._shutting_down = True
+        self.timer.cancel()
         stop_msg = Twist()
-        self._cmdVel.publish(stop_msg)
+        try:
+            self._cmdVel.publish(stop_msg)
+        except Exception:
+            pass
 
 def main(args=None):
-    rclpy.init(args=args)
+    rclpy.init(
+        args=args,
+        signal_handler_options=SignalHandlerOptions.NO,
+    )
     robot = RobotSelfControl()
     try:
         rclpy.spin(robot)
     except KeyboardInterrupt:
         pass
     finally:
-        # Safety: publish stop once on exit
-        try:
-            robot._cmdVel.publish(Twist())
-        except Exception:
-            pass
+        robot.stop()
         robot.destroy_node()
         if rclpy.ok():
             rclpy.shutdown()

@@ -1,7 +1,11 @@
+from typing import List
+
 from launch import LaunchDescription
 from launch.actions import DeclareLaunchArgument
 from launch.substitutions import LaunchConfiguration
 from launch_ros.actions import Node
+from launch_ros.parameter_descriptions import ParameterValue
+
 
 def generate_launch_description():
     image_width = LaunchConfiguration('image_width')
@@ -45,7 +49,10 @@ def generate_launch_description():
         respawn_delay=2.0,
         parameters=[{
             'video_device': video_device,
-            'image_size': [160, 120], #[image_width, image_height],
+            'image_size': ParameterValue(
+                ['[', image_width, ', ', image_height, ']'],
+                value_type=List[int],
+            ),
             'pixel_format': pixel_format,
             'output_encoding': output_encoding,
         }]

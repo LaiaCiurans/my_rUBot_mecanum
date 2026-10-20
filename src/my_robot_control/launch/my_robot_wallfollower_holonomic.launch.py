@@ -6,29 +6,37 @@ from launch_ros.actions import Node
 
 def generate_launch_description():
     parameters = {
-        'distance_limit': LaunchConfiguration('distance_limit'),
+        'follow_distance': LaunchConfiguration('follow_distance'),
         'tolerance': LaunchConfiguration('tolerance'),
         'right_detection_limit': LaunchConfiguration('right_detection_limit'),
         'forward_speed': LaunchConfiguration('forward_speed'),
         'turn_speed': LaunchConfiguration('turn_speed'),
         'lateral_gain': LaunchConfiguration('lateral_gain'),
         'alignment_gain': LaunchConfiguration('alignment_gain'),
-        'time_to_stop': LaunchConfiguration('time_to_stop'),
+        'max_lateral_speed': LaunchConfiguration('max_lateral_speed'),
+        'max_angular_speed': LaunchConfiguration('max_angular_speed'),
+        'back_right_limit_factor': LaunchConfiguration(
+            'back_right_limit_factor'
+        ),
     }
 
     return LaunchDescription([
-        DeclareLaunchArgument('distance_limit', default_value='0.5'),
+        DeclareLaunchArgument('follow_distance', default_value='0.35'),
         DeclareLaunchArgument('tolerance', default_value='0.05'),
         DeclareLaunchArgument('right_detection_limit', default_value='1.0'),
-        DeclareLaunchArgument('forward_speed', default_value='0.2'),
-        DeclareLaunchArgument('turn_speed', default_value='0.4'),
+        DeclareLaunchArgument('forward_speed', default_value='0.30'),
+        DeclareLaunchArgument('turn_speed', default_value='0.50'),
         DeclareLaunchArgument('lateral_gain', default_value='0.5'),
         DeclareLaunchArgument('alignment_gain', default_value='0.5'),
-        DeclareLaunchArgument('time_to_stop', default_value='30.0'),
+        DeclareLaunchArgument('max_lateral_speed', default_value='0.40'),
+        DeclareLaunchArgument('max_angular_speed', default_value='1.00'),
+        DeclareLaunchArgument(
+            'back_right_limit_factor', default_value='1.50'
+        ),
         Node(
             package='my_robot_control',
-            executable='my_rubot_wallfollower_holonomic_exec',
-            name='rubot_wall_follower_holonomic_node',
+            executable='my_robot_wallfollower_holonomic_exec',
+            name='robot_wall_follower_holonomic_node',
             output='screen',
             parameters=[parameters],
         ),

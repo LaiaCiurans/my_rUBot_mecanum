@@ -10,7 +10,7 @@ export RMW_IMPLEMENTATION=rmw_cyclonedds_cpp
 
 # Prepara l'entorn
 source /opt/ros/humble/setup.bash
-source /home/ubuntu/ROS2_rUBot_mecanum_ws/install/setup.bash
+source /home/ubuntu/my_rUBot_mecanum/install/setup.bash
 # Graphical interface (change PC IP address accordingly)
 #export DISPLAY=192.168.1.3:0.0
 

@@ -3,12 +3,11 @@
     <!-- ========================
          Launch Arguments
          ======================== -->
-    <arg name="distance_limit"  default="0.4" />
-    <arg name="tolerance"       default="0.02" />
+    <arg name="follow_distance" default="0.35" />
+    <arg name="tolerance"       default="0.05" />
     <arg name="right_detection_limit" default="1.0" />
-    <arg name="forward_speed"   default="0.3" />
-    <arg name="turn_speed"      default="0.5" />
-    <arg name="time_to_stop"    default="80.0" />
+    <arg name="forward_speed"   default="0.30" />
+    <arg name="turn_speed"      default="0.50" />
 
     <!-- ========================
          Node Definition
@@ -20,11 +19,10 @@
         output="screen">
 
         <!-- Pass arguments as parameters -->
-        <param name="distance_limit" value="$(var distance_limit)" />
+        <param name="follow_distance" value="$(var follow_distance)" />
         <param name="tolerance" value="$(var tolerance)" />
         <param name="right_detection_limit" value="$(var right_detection_limit)" />
         <param name="forward_speed" value="$(var forward_speed)" />
         <param name="turn_speed" value="$(var turn_speed)" />
-        <param name="time_to_stop" value="$(var time_to_stop)" />
     </node>
 </launch>

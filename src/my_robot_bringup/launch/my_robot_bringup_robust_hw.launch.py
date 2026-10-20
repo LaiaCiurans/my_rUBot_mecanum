@@ -2,7 +2,17 @@ import os
 
 from ament_index_python.packages import get_package_share_directory
 from launch import LaunchDescription
-from launch.actions import DeclareLaunchArgument, ExecuteProcess, IncludeLaunchDescription, TimerAction
+from launch.actions import (
+    DeclareLaunchArgument,
+    EmitEvent,
+    ExecuteProcess,
+    IncludeLaunchDescription,
+    LogInfo,
+    RegisterEventHandler,
+    TimerAction,
+)
+from launch.event_handlers import OnProcessExit
+from launch.events import Shutdown
 from launch.launch_description_sources import PythonLaunchDescriptionSource
 from launch.substitutions import Command, LaunchConfiguration, PathJoinSubstitution
 from launch_ros.actions import Node
@@ -148,13 +158,40 @@ def generate_launch_description():
     # short delay to avoid serial/USB races during real hardware bring-up.
     # ------------------------------------------------------------------
     wait_for_devices = ExecuteProcess(
-        cmd=['python3', os.path.join(
-            get_package_share_directory('my_robot_bringup'),
-            'scripts',
-            'wait_for_devices.py'
-        )],
+        cmd=[
+            'python3',
+            os.path.join(
+                get_package_share_directory('my_robot_bringup'),
+                'scripts',
+                'wait_for_devices.py'
+            ),
+            '--serial', mecanum_serial_port,
+            '--serial', rplidar_serial_port,
+            '--device', usb_video_device,
+            '--timeout', '30',
+        ],
         output='screen',
         name='wait_for_robot_devices'
+    )
+
+    def start_hardware_after_wait(event, context):
+        del context
+        if event.returncode != 0:
+            return [
+                LogInfo(msg='ERROR: Robot hardware check failed; stopping bringup.'),
+                EmitEvent(event=Shutdown(reason='Robot hardware is not ready')),
+            ]
+        return [
+            robot_driver_hw_launch,
+            TimerAction(period=2.0, actions=[usb_cam_hw_launch]),
+            TimerAction(period=8.0, actions=[rplidar_hw_launch]),
+        ]
+
+    start_hardware_when_ready = RegisterEventHandler(
+        OnProcessExit(
+            target_action=wait_for_devices,
+            on_exit=start_hardware_after_wait,
+        )
     )
 
     # ------------------------------------------------------------------
@@ -173,9 +210,7 @@ def generate_launch_description():
     ld.add_action(declare_camera_output_encoding)
 
     ld.add_action(robot_state_publisher_node)
+    ld.add_action(start_hardware_when_ready)
     ld.add_action(wait_for_devices)
-    ld.add_action(TimerAction(period=2.0, actions=[robot_driver_hw_launch]))
-    ld.add_action(TimerAction(period=4.0, actions=[usb_cam_hw_launch]))
-    ld.add_action(TimerAction(period=10.0, actions=[rplidar_hw_launch]))
 
     return ld
