@@ -1,4 +1,4 @@
-# **ROS2 rUBot setup 1**
+# **ROS2 rUBot setup 1 2**
 
 The objectives of this section are:
 - Setup the robot project in virtual environment for simulation
