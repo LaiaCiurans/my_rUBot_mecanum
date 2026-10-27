@@ -14,7 +14,7 @@ States:
 
 Short obstacle:
     FOLLOW_RIGHT -> FOLLOW_FRONT -> BYPASS_FRONT_RIGHT -> BYPASS_RIGHT
-                 -> BYPASS_BACK_RIGHT -> FOLLOW_RIGHT
+                 -> BYPASS_BACK_RIGHuT -> FOLLOW_RIGHT
 Long wall:
     FOLLOW_RIGHT -> FOLLOW_FRONT -> TURN_TO_RIGHT -> FOLLOW_RIGHT
 """
