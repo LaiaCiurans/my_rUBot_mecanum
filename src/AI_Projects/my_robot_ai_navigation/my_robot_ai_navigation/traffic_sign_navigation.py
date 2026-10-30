@@ -14,11 +14,11 @@ class TrafficSignNavigation(Node):
     def __init__(self):
         super().__init__('traffic_sign_navigation')
 
-        self.declare_parameter('initial_pose', [0.0, 0.0, 0.0])
-        self.declare_parameter('inspection_pose', [0.5, -1.0, 1.57])
-        self.declare_parameter('left_waypoint', [-0.8, 0.3, 1.57])
-        self.declare_parameter('right_waypoint', [0.8, 0.3, 1.57])
-        self.declare_parameter('final_pose', [0.0, 1.3, 1.57])
+        self.declare_parameter('initial_pose', [-0.5, 0.0, 0.0])
+        self.declare_parameter('inspection_pose', [0.0, 0.0, 0.0])
+        self.declare_parameter('left_waypoint', [0.5, 1.0, 0.0])
+        self.declare_parameter('right_waypoint', [0.5, -1.0, 0.0])
+        self.declare_parameter('final_pose', [2.0, 1.0, 1.57])
         self.declare_parameter('stop_duration', 3.0)
 
         self.initial_pose = self.get_parameter('initial_pose').value

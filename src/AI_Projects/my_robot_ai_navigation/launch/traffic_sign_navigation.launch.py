@@ -20,7 +20,6 @@ def generate_launch_description():
         Node(
             package='my_robot_ai_navigation',
             executable='traffic_sign_navigation_exec',
-            name='traffic_sign_navigation',
             output='screen',
             parameters=[config_file],
         ),
